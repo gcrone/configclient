@@ -10,11 +10,14 @@ daq_setup_environment()
 find_package(ers REQUIRED)
 find_package(Boost REQUIRED)
 
+set(CONFIGCLIENT_DEPENDENCIES  ers::ers)
+
+
 ##############################################################################
 # Main library
 #target_include_directories(ConfigClient SYSTEM PRIVATE Boost)
 include_directories(SYSTEM PRIVATE ${Boost_INCLUDE_DIR})
-daq_add_library(ConfigClient.cpp ) #LINK_LIBRARIES ers})
+daq_add_library(ConfigClient.cpp LINK_LIBRARIES ${CONFIGCLIENT_DEPENDENCIES})
 
 ##############################################################################
 # Integration tests

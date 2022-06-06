@@ -2,9 +2,11 @@
 #include <iostream>
 
 #include "ConfigClient.hpp"
+#include "ConfigClientIssues.hpp"
 
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
 
+using namespace dunedaq::configclient;
 
 ConfigClient::ConfigClient(const std::string& name, const std::string& server,
                            const std::string& port)
@@ -35,6 +37,7 @@ void ConfigClient::publish(const std::string& config,
   http::read(m_stream, m_buffer, response);
   if (response.result_int()!=200) {
     std::cerr << "Bad response to publish " << response.result() << std::endl;
+    throw(FailedPublish(ERS_HERE,std::string(response.reason())));
   }
 }
 
@@ -49,6 +52,7 @@ void ConfigClient::retract() {
   http::read(m_stream, m_buffer, response);
   if (response.result_int()!=200) {
     std::cerr << "Bad response to retract " << response.result() << std::endl;
+    throw(FailedRetract(ERS_HERE,m_name,std::string(response.reason())));
   }
 }
 
@@ -60,7 +64,7 @@ std::string ConfigClient::get(const std::string& target) {
   http::read(m_stream, m_buffer, response);
 
   if (response.result_int() != 200) {
-    throw(response.reason());
+    throw(FailedLookup(ERS_HERE, target, std::string(response.reason())));
   }
   //std::cout << "response: " << response << std::endl;
   return response.body();

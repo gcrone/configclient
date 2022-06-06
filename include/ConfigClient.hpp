@@ -1,3 +1,6 @@
+#ifndef CONFIGCLIENT_HPP
+#define CONFIGCLIENT_HPP
+
 #include <string>
 
 #include <boost/beast/core.hpp>
@@ -10,6 +13,8 @@ namespace beast = boost::beast;     // from <boost/beast.hpp>
 namespace http = beast::http;       // from <boost/beast/http.hpp>
 namespace net = boost::asio;        // from <boost/asio.hpp>
 
+namespace dunedaq {
+namespace configclient {
 class ConfigClient {
 public:
   ConfigClient(const std::string& name, const std::string& server,
@@ -29,3 +34,6 @@ private:
   beast::tcp_stream m_stream;
   beast::flat_buffer m_buffer;
 };
+} //configclient
+} //dunedaq
+#endif

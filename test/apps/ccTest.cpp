@@ -1,6 +1,9 @@
 #include <iostream>
 
 #include "ConfigClient.hpp"
+#include "ConfigClientIssues.hpp"
+
+using namespace dunedaq::configclient;
 
 int main(int argc, char* argv[]) {
   ConfigClient client("ccTest", "localhost", "5000");
@@ -21,8 +24,8 @@ int main(int argc, char* argv[]) {
     app=client.getResourceApp(resource);
     std::cout << "app=" << app << std::endl;
   }
-  catch(...) {
-    std::cout << "Lookup of " << resource << " failed" << std::endl;
+  catch(FailedLookup& ex) {
+    std::cout << "Lookup of " << resource << " failed. " << ex << std::endl;
   }
 
   if (app!="") {
@@ -39,13 +42,22 @@ int main(int argc, char* argv[]) {
   std::cout << "Retracting configuration for " << client.name() << std::endl;
   client.retract();
 
+  std::cout << "Retracting configuration for " << client.name() 
+            << " again" << std::endl;
+  try {
+    client.retract();
+  }
+  catch (FailedRetract& ex) {
+    std::cout << "caught exception: " << ex <<std::endl;
+  }
   std::cout << "Looking up config for app " << client.name() << std::endl;
   try {
     std::string conf=client.getAppConfig(client.name());
     std::cout << "conf=" << conf << std::endl;
   }
-  catch(...) {
+  catch(FailedLookup& ex) {
     std::cout << "Lookup of config for " << client.name() << " failed" << std::endl;
+    std::cout << "caught exception: " << ex <<std::endl;
   }
 
   return 0;
