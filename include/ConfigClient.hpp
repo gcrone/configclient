@@ -6,6 +6,8 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ip/basic_resolver.hpp>
 
 namespace beast = boost::beast;     // from <boost/beast.hpp>
 namespace net = boost::asio;        // from <boost/asio.hpp>
@@ -28,6 +30,7 @@ private:
 
   std::string m_name;
   net::io_context m_ioContext;
+  net::ip::basic_resolver<net::ip::tcp>::results_type m_addr;
   beast::tcp_stream m_stream;
   beast::flat_buffer m_buffer;
 };

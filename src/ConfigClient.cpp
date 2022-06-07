@@ -6,7 +6,6 @@
 
 #include "logging/Logging.hpp"
 #include <boost/beast/http.hpp>
-#include <boost/asio/ip/tcp.hpp>
 
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
 namespace http = beast::http;       // from <boost/beast/http.hpp>
@@ -18,13 +17,10 @@ ConfigClient::ConfigClient(const std::string& name, const std::string& server,
   : m_name(name), m_stream(m_ioContext) {
 
   tcp::resolver resolver(m_ioContext);
-  auto const addr=resolver.resolve(server,port);
-  m_stream.connect(addr);
+  m_addr=resolver.resolve(server,port);
 }
 
 ConfigClient::~ConfigClient(){
-  beast::error_code ec;
-  m_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 }
 
 void ConfigClient::publish(const std::string& config,
@@ -35,10 +31,13 @@ void ConfigClient::publish(const std::string& config,
 
   req.body()="app="+m_name+"&conf="+config+"&resources="+resources;
   req.prepare_payload();
+  m_stream.connect(m_addr);
   http::write(m_stream, req);
 
   http::response<http::string_body> response;
   http::read(m_stream, m_buffer, response);
+  beast::error_code ec;
+  m_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
   if (response.result_int()!=200) {
     throw(FailedPublish(ERS_HERE,std::string(response.reason())));
   }
@@ -50,9 +49,12 @@ void ConfigClient::retract() {
   req.set(http::field::content_type,"application/x-www-form-urlencoded");
   req.body()="app="+m_name;
   req.prepare_payload();
+  m_stream.connect(m_addr);
   http::write(m_stream, req);
   http::response<http::string_body> response;
   http::read(m_stream, m_buffer, response);
+  beast::error_code ec;
+  m_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
   if (response.result_int()!=200) {
     throw(FailedRetract(ERS_HERE,m_name,std::string(response.reason())));
   }
@@ -60,6 +62,7 @@ void ConfigClient::retract() {
 
 std::string ConfigClient::get(const std::string& target) {
   http::request<http::string_body> req{http::verb::get, target, 11};
+  m_stream.connect(m_addr);
   http::write(m_stream, req);
 
   http::response<http::string_body> response;
@@ -69,6 +72,8 @@ try{
 catch(std::exception& e) {
  std::cerr<< "caught exception " << e.what() << std::endl;
 }
+  beast::error_code ec;
+  m_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
   TLOG_DEBUG(25) << "get " << target << " response: " << response;
 
   if (response.result_int() != 200) {
