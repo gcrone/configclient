@@ -63,7 +63,12 @@ std::string ConfigClient::get(const std::string& target) {
   http::write(m_stream, req);
 
   http::response<http::string_body> response;
+try{
   http::read(m_stream, m_buffer, response);
+}
+catch(std::exception& e) {
+ std::cerr<< "caught exception " << e.what() << std::endl;
+}
   TLOG_DEBUG(25) << "get " << target << " response: " << response;
 
   if (response.result_int() != 200) {

@@ -6,11 +6,11 @@ find_package(daq-cmake REQUIRED)
 daq_setup_environment()
 
 find_package(logging REQUIRED)
-#find_package(nlohmann_json REQUIRED)
+find_package(nlohmann_json REQUIRED)
 find_package(ers REQUIRED)
 find_package(Boost REQUIRED)
 
-set(CONFIGCLIENT_DEPENDENCIES  ers::ers logging::logging Boost::program_options)
+set(CONFIGCLIENT_DEPENDENCIES  ers::ers logging::logging Boost::program_options nlohmann_json::nlohmann_json)
 
 
 ##############################################################################
