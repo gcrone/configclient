@@ -4,7 +4,12 @@
 #include "ConfigClient.hpp"
 #include "ConfigClientIssues.hpp"
 
+#include "logging/Logging.hpp"
+#include <boost/beast/http.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
+namespace http = beast::http;       // from <boost/beast/http.hpp>
 
 using namespace dunedaq::configclient;
 
@@ -30,13 +35,11 @@ void ConfigClient::publish(const std::string& config,
 
   req.body()="app="+m_name+"&conf="+config+"&resources="+resources;
   req.prepare_payload();
-  //std::cout << "req: " << req << std::endl;
   http::write(m_stream, req);
 
   http::response<http::string_body> response;
   http::read(m_stream, m_buffer, response);
   if (response.result_int()!=200) {
-    std::cerr << "Bad response to publish " << response.result() << std::endl;
     throw(FailedPublish(ERS_HERE,std::string(response.reason())));
   }
 }
@@ -51,7 +54,6 @@ void ConfigClient::retract() {
   http::response<http::string_body> response;
   http::read(m_stream, m_buffer, response);
   if (response.result_int()!=200) {
-    std::cerr << "Bad response to retract " << response.result() << std::endl;
     throw(FailedRetract(ERS_HERE,m_name,std::string(response.reason())));
   }
 }
@@ -62,11 +64,11 @@ std::string ConfigClient::get(const std::string& target) {
 
   http::response<http::string_body> response;
   http::read(m_stream, m_buffer, response);
+  TLOG_DEBUG(25) << "get " << target << " response: " << response;
 
   if (response.result_int() != 200) {
     throw(FailedLookup(ERS_HERE, target, std::string(response.reason())));
   }
-  //std::cout << "response: " << response << std::endl;
   return response.body();
 }
 
