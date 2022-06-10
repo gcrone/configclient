@@ -66,12 +66,8 @@ std::string ConfigClient::get(const std::string& target) {
   http::write(m_stream, req);
 
   http::response<http::string_body> response;
-try{
   http::read(m_stream, m_buffer, response);
-}
-catch(std::exception& e) {
- std::cerr<< "caught exception " << e.what() << std::endl;
-}
+
   beast::error_code ec;
   m_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
   TLOG_DEBUG(25) << "get " << target << " response: " << response;
