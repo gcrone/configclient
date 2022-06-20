@@ -12,9 +12,9 @@ namespace http = beast::http;       // from <boost/beast/http.hpp>
 
 using namespace dunedaq::configclient;
 
-ConfigClient::ConfigClient(const std::string& name, const std::string& server,
+ConfigClient::ConfigClient(const std::string& server,
                            const std::string& port)
-  : m_name(name), m_stream(m_ioContext) {
+  : m_stream(m_ioContext) {
 
   tcp::resolver resolver(m_ioContext);
   m_addr=resolver.resolve(server,port);
@@ -23,13 +23,13 @@ ConfigClient::ConfigClient(const std::string& name, const std::string& server,
 ConfigClient::~ConfigClient(){
 }
 
-void ConfigClient::publish(const std::string& config,
+void ConfigClient::publish(const std::string& name, const std::string& config,
                            const std::string& resources) {
   std::string target="/publish";
   http::request<http::string_body> req{http::verb::post, target, 11};
   req.set(http::field::content_type,"application/x-www-form-urlencoded");
 
-  req.body()="app="+m_name+"&conf="+config+"&resources="+resources;
+  req.body()="app="+name+"&conf="+config+"&resources="+resources;
   req.prepare_payload();
   m_stream.connect(m_addr);
   http::write(m_stream, req);
@@ -43,11 +43,11 @@ void ConfigClient::publish(const std::string& config,
   }
 }
 
-void ConfigClient::retract() {
+void ConfigClient::retract(const std::string& name) {
   std::string target="/retract";
   http::request<http::string_body> req{http::verb::post, target, 11};
   req.set(http::field::content_type,"application/x-www-form-urlencoded");
-  req.body()="app="+m_name;
+  req.body()="app="+name;
   req.prepare_payload();
   m_stream.connect(m_addr);
   http::write(m_stream, req);
@@ -56,7 +56,7 @@ void ConfigClient::retract() {
   beast::error_code ec;
   m_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
   if (response.result_int()!=200) {
-    throw(FailedRetract(ERS_HERE,m_name,std::string(response.reason())));
+    throw(FailedRetract(ERS_HERE,name,std::string(response.reason())));
   }
 }
 

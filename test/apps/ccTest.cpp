@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  ConfigClient client(name, server, port);
+  ConfigClient client(server, port);
   std::string myConf;
   if (file!="") {
     std::ifstream infile(file);
@@ -59,8 +59,8 @@ int main(int argc, char* argv[]) {
     myConf="{\"host\": \"192.168.1.102\", \"port\": 9999}";
   }
   std::string res="xp1, xp2";
-  std::cout << "Publishing my conf" << std::endl;
-  client.publish(myConf,res);
+  std::cout << "Publishing my conf as " << name << std::endl;
+  client.publish(name,myConf,res);
 
   std::cout << "Looking up resource " << resource << std::endl;
   std::string app;
@@ -89,46 +89,46 @@ int main(int argc, char* argv[]) {
   }
 
 
-  if (app!=client.name()) {
-    std::cout << "Looking up config for app " << client.name() << std::endl;
+  if (app!=name) {
+    std::cout << "Looking up config for app " << name << std::endl;
     try {
-      std::string conf=client.getAppConfig(client.name());
+      std::string conf=client.getAppConfig(name);
       auto jsconf=json::parse(conf);
       for (auto& el : jsconf.items()) {
         std::cout << el.key() << " = " << el.value() << std:: endl;
       }
     }
     catch(FailedLookup& ex) {
-      std::cout << "Lookup of config for " << client.name() << " failed" << std::endl;
+      std::cout << "Lookup of config for " << name << " failed" << std::endl;
       std::cout << "caught exception: " << ex <<std::endl;
     }
   }
 
 
-  std::cout << "Retracting configuration for " << client.name() << std::endl;
+  std::cout << "Retracting configuration for " << name << std::endl;
   try {
-    client.retract();
+    client.retract(name);
   }
   catch (FailedRetract& ex) {
     std::cout << "Failed to retract configuration. Caught exception " << ex << std::endl;
   }
 
-  std::cout << "Retracting configuration for " << client.name() 
+  std::cout << "Retracting configuration for " << name
             << " again" << std::endl;
   try {
-    client.retract();
+    client.retract(name);
   }
   catch (FailedRetract& ex) {
     std::cout << "OK, that failed as expected, caught exception: " << ex <<std::endl;
   }
 
-  std::cout << "Looking up config for app " << client.name() << std::endl;
+  std::cout << "Looking up config for app " << name << std::endl;
   try {
-    std::string conf=client.getAppConfig(client.name());
+    std::string conf=client.getAppConfig(name);
     std::cout << "Woops, that shouldn't have worked, conf=" << conf << std::endl;
   }
   catch(FailedLookup& ex) {
-    std::cout << "OK, lookup of config for " << client.name() << " failed" << std::endl;
+    std::cout << "OK, lookup of config for " << name << " failed" << std::endl;
   }
 
   return 0;
