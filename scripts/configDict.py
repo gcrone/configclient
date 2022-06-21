@@ -10,39 +10,46 @@ class configmgr(object):
   def __init__(self, name):
     self.name=name
 
-    if "namespace" in os.environ:
-      self.namespace=os.environ["namespace"]
-    else:
-      self.namespace="default"
+    if name != "":
+      if "namespace" in os.environ:
+        self.namespace=os.environ["namespace"]
+      else:
+        self.namespace="default"
 
-    config.load_config()
-    self.core_api = client.CoreV1Api()
-    try:
-      body=self.core_api.read_namespaced_config_map(name,self.namespace)
-    except Exception as ex:
-      print (f"Creating configMap {name}")
-      body=client.V1ConfigMap(api_version="v1",
-                              metadata={"name":name},
-                              data={"app":""}
-                              )
-      self.core_api.create_namespaced_config_map(self.namespace,body)
-    self.store=body.data
+        config.load_config()
+        self.core_api = client.CoreV1Api()
+        try:
+          body=self.core_api.read_namespaced_config_map(name,self.namespace)
+        except Exception as ex:
+          print (f"Creating configMap {name}")
+          body=client.V1ConfigMap(api_version="v1",
+                                  metadata={"name":name},
+                                  data={"app":""}
+                                  )
+          self.core_api.create_namespaced_config_map(self.namespace,body)
+        self.store=body.data
+    else:
+      self.store={}
     print(self.store)
 
   def update(self, newdict):
-    body=self.core_api.read_namespaced_config_map(self.name,self.namespace)
-    for item in newdict:
-      body.data[item]=json.dumps(newdict[item])
-    self.core_api.patch_namespaced_config_map(self.name,self.namespace,body)
+    if self.name != "":
+      body=self.core_api.read_namespaced_config_map(self.name,self.namespace)
+      for item in newdict:
+        body.data[item]=json.dumps(newdict[item])
+      self.core_api.patch_namespaced_config_map(self.name,self.namespace,body)
 
-cmgr=configmgr('test2')
 store={'app':{},'resource':{}}
-for item in cmgr.store:
-  store[item]={}
-  if cmgr.store[item]!="":
-    appdict=json.loads(cmgr.store[item])
-    for a in appdict:
-      store[item][a]=appdict[a]
+if "configMap" in os.environ:
+  cmgr=configmgr(os.environ["configMap"])
+  for item in cmgr.store:
+    store[item]={}
+    if cmgr.store[item]!="":
+      appdict=json.loads(cmgr.store[item])
+      for a in appdict:
+        store[item][a]=appdict[a]
+else:
+  cmgr=configmgr("")
 app=Flask('configDict')
 
 @app.route("/")
