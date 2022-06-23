@@ -1,5 +1,5 @@
-#include "ConfigClient.hpp"
-#include "ConfigClientIssues.hpp"
+#include "configclient/ConfigClient.hpp"
+#include "configclient/ConfigClientIssues.hpp"
 #include "logging/Logging.hpp"
 
 #include "boost/program_options.hpp"
