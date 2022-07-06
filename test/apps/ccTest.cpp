@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 
 using namespace dunedaq::configclient;
 using nlohmann::json;
@@ -19,14 +20,14 @@ int main(int argc, char* argv[]) {
   std::string server("localhost");
   std::string port("5000");
   std::string file;
-  std::string resource="xp2";
+  std::string source="xp2";
   namespace po = boost::program_options;
   po::options_description desc("Simple test program for ConfigClient class");
   desc.add_options()
     ("file,f", po::value<std::string>(&file), "file to publish as our configuration")
     ("name,n", po::value<std::string>(&name), "name to publish our config under")
     ("port,p", po::value<std::string>(&port), "port to connect to on configuration server")
-    ("resource,r", po::value<std::string>(&resource), "name of resource to lookup")
+    ("source,r", po::value<std::string>(&source), "name of source to lookup")
     ("server,s", po::value<std::string>(&server), "Configuration server to connect to")
     ;
   try {
@@ -40,8 +41,14 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-
+  try {
+    ConfigClient dummyclient(server, port);
+  }
+  catch (EnvNotFound& ex) {
+    putenv(const_cast<char*>("DUNEDAQ_PARTITION=cctest"));
+  }
   ConfigClient client(server, port);
+
   std::string myConf;
   if (file!="") {
     std::ifstream infile(file);
@@ -60,16 +67,16 @@ int main(int argc, char* argv[]) {
   }
   std::string res="xp1, xp2";
   std::cout << "Publishing my conf as " << name << std::endl;
-  client.publish(name,myConf,res);
+  client.publishApp(name,myConf,res);
 
-  std::cout << "Looking up resource " << resource << std::endl;
+  std::cout << "Looking up source " << source << std::endl;
   std::string app;
   try {
-    app=client.getResourceApp(resource);
-    std::cout << "Resource belongs to app " << app << std::endl;
+    app=client.getSourceApp(source);
+    std::cout << "Source belongs to app " << app << std::endl;
   }
   catch(FailedLookup& ex) {
-    std::cout << "Lookup of " << resource << " failed. " << ex << std::endl;
+    std::cout << "Lookup of " << source << " failed. " << ex << std::endl;
   }
 
   if (app!="") {
@@ -130,6 +137,9 @@ int main(int argc, char* argv[]) {
   catch(FailedLookup& ex) {
     std::cout << "OK, lookup of config for " << name << " failed" << std::endl;
   }
+
+  
+
 
   return 0;
 }

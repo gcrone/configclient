@@ -15,6 +15,13 @@ using namespace dunedaq::configclient;
 ConfigClient::ConfigClient(const std::string& server,
                            const std::string& port)
   : m_stream(m_ioContext) {
+  char* part=getenv("DUNEDAQ_PARTITION");
+  if (part) {
+    m_partition=std::string(part);
+  }
+  else {
+    throw(EnvNotFound(ERS_HERE,"DUNEDAQ_PARTITION"));
+  }
 
   tcp::resolver resolver(m_ioContext);
   m_addr=resolver.resolve(server,port);
@@ -23,13 +30,21 @@ ConfigClient::ConfigClient(const std::string& server,
 ConfigClient::~ConfigClient(){
 }
 
-void ConfigClient::publish(const std::string& name, const std::string& config,
-                           const std::string& resources) {
+void ConfigClient::publishApp(const std::string& name, const std::string& config,
+                           const std::string& sources) {
+  publish("&app="+name+"&conf="+config+"&sources="+sources);
+}
+void ConfigClient::publishConnection(const std::string& config,
+                           const std::string& sources) {
+  publish("&connection="+config+"&sources="+sources);
+}
+void ConfigClient::publish(const std::string& content) {
+
   std::string target="/publish";
   http::request<http::string_body> req{http::verb::post, target, 11};
   req.set(http::field::content_type,"application/x-www-form-urlencoded");
 
-  req.body()="app="+name+"&conf="+config+"&resources="+resources;
+  req.body()="partition="+m_partition+content;
   req.prepare_payload();
   m_stream.connect(m_addr);
   http::write(m_stream, req);
@@ -47,7 +62,7 @@ void ConfigClient::retract(const std::string& name) {
   std::string target="/retract";
   http::request<http::string_body> req{http::verb::post, target, 11};
   req.set(http::field::content_type,"application/x-www-form-urlencoded");
-  req.body()="app="+name;
+  req.body()="partition="+m_partition+"&app="+name;
   req.prepare_payload();
   m_stream.connect(m_addr);
   http::write(m_stream, req);
@@ -79,12 +94,22 @@ std::string ConfigClient::get(const std::string& target) {
 }
 
 std::string ConfigClient::getAppConfig(const std::string& appName) {
-  std::string target="/getapp/"+appName;
+  std::string target="/getapp/"+m_partition+"/"+appName;
   return get(target);
 }
 
 
-std::string ConfigClient::getResourceApp(const std::string& resource) {
-  std::string target="/getresource/"+resource;
+std::string ConfigClient::getSourceApp(const std::string& source) {
+  std::string target="/getsource/"+m_partition+"/"+source;
+  return get(target);
+}
+
+std::string ConfigClient::getSourceConnection(const std::string& source) {
+  std::string target="/getsourceconn/"+m_partition+"/"+source;
+  return get(target);
+}
+
+std::string ConfigClient::getConnectionConfig(const std::string& connection) {
+  std::string target="/getconnection/"+m_partition+"/"+connection;
   return get(target);
 }

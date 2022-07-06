@@ -20,14 +20,18 @@ public:
                const std::string& port);
   ~ConfigClient();
 
-  void publish(const std::string& name, const std::string& config, const std::string& resources="");
+  void publishApp(const std::string& name, const std::string& config, const std::string& sources="");
+  void publishConnection(const std::string& config, const std::string& sources="");
   void retract(const std::string& name);
   std::string getAppConfig(const std::string& appName);
-  std::string getResourceApp(const std::string& resource);
-
+  std::string getSourceApp(const std::string& source);
+  std::string getSourceConnection(const std::string& source);
+  std::string getConnectionConfig(const std::string& connection);
 private:
   std::string get(const std::string& target);
+  void publish(const std::string& content);
 
+  std::string m_partition;
   net::io_context m_ioContext;
   net::ip::basic_resolver<net::ip::tcp>::results_type m_addr;
   beast::tcp_stream m_stream;

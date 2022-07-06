@@ -7,6 +7,10 @@
 
 namespace dunedaq{
   ERS_DECLARE_ISSUE(configclient,
+                    EnvNotFound,
+                    "Environment variable " << name << " not found",
+                    ((std::string)name))
+  ERS_DECLARE_ISSUE(configclient,
                     FailedPublish,
                     "Failed to publish configuration " << result,
                     ((std::string)result))
